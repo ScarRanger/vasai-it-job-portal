@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null; // Allow reading user profiles for company-job seeker interaction
+    }
+    
+    // Jobs are readable by all authenticated users
+    // Only companies can create/update their own jobs
+    match /jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.companyId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.companyId;
+    }
+    
+    // Applications can be read/written by applicant or job owner
+    match /applications/{applicationId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.applicantId || 
+         request.auth.uid == get(/databases/$(database)/documents/jobs/$(resource.data.jobId)).data.companyId);
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.applicantId;
+    }
+  }
+}
