@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,22 +22,7 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetchData();
-  }, [userData.id]);
-
-  useEffect(() => {
-    // Filter jobs based on search term
-    const filtered = jobs.filter(job =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-    setFilteredJobs(filtered);
-  }, [jobs, searchTerm]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [jobsData, applicationsData] = await Promise.all([
         jobService.getJobs(),
@@ -55,7 +40,22 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [userData.id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    // Filter jobs based on search term
+    const filtered = jobs.filter(job =>
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+    setFilteredJobs(filtered);
+  }, [jobs, searchTerm]);
 
   const handleJobClick = (job: Job) => {
     setSelectedJob(job);
@@ -91,12 +91,12 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
   const getStatusColor = (status: Application['status']) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'reviewing': return 'text-blue-600 bg-blue-100';
-      case 'shortlisted': return 'text-green-600 bg-green-100';
-      case 'rejected': return 'text-red-600 bg-red-100';
-      case 'hired': return 'text-purple-600 bg-purple-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'pending': return 'text-yellow-300 bg-yellow-900/50';
+      case 'reviewing': return 'text-blue-300 bg-blue-900/50';
+      case 'shortlisted': return 'text-green-300 bg-green-900/50';
+      case 'rejected': return 'text-red-300 bg-red-900/50';
+      case 'hired': return 'text-purple-300 bg-purple-900/50';
+      default: return 'text-gray-300 bg-gray-700';
     }
   };
 
@@ -124,9 +124,9 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Jobs Section */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Available Jobs</h2>
+              <h2 className="text-2xl font-bold text-white">Available Jobs</h2>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -142,17 +142,17 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
               {filteredJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="border border-gray-600 bg-gray-700 rounded-lg p-4 hover:shadow-md hover:bg-gray-650 transition-all cursor-pointer"
                   onClick={() => handleJobClick(job)}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-blue-600">{job.title}</h3>
-                    <span className="text-sm text-gray-500">{formatDate(job.postedAt)}</span>
+                    <h3 className="text-lg font-semibold text-blue-400">{job.title}</h3>
+                    <span className="text-sm text-gray-400">{formatDate(job.postedAt)}</span>
                   </div>
                   
-                  <p className="text-gray-800 font-medium mb-2">{job.companyName}</p>
+                  <p className="text-white font-medium mb-2">{job.companyName}</p>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-4 text-sm text-gray-300 mb-3">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {job.location}
@@ -177,18 +177,18 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
                       </span>
                     ))}
                     {job.skills.length > 3 && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-400">
                         +{job.skills.length - 3} more
                       </span>
                     )}
                   </div>
 
-                  <p className="text-gray-600 text-sm line-clamp-2">
+                  <p className="text-gray-300 text-sm line-clamp-2">
                     {job.description}
                   </p>
 
                   {appliedJobs.has(job.id) && (
-                    <div className="mt-3 inline-block px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                    <div className="mt-3 inline-block px-3 py-1 bg-green-900/50 text-green-300 text-sm rounded-full">
                       Applied
                     </div>
                   )}
@@ -196,7 +196,7 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
               ))}
 
               {filteredJobs.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-400">
                   No jobs found matching your search criteria.
                 </div>
               )}
@@ -206,16 +206,16 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
         {/* Applications Section */}
         <div>
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-4">My Applications</h2>
+          <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold mb-4 text-white">My Applications</h2>
             
             <div className="space-y-3">
               {applications.map((application) => (
-                <div key={application.id} className="border rounded-lg p-3">
-                  <h4 className="font-semibold text-sm">{application.jobTitle}</h4>
-                  <p className="text-gray-600 text-xs">{application.companyName}</p>
+                <div key={application.id} className="border border-gray-600 bg-gray-700 rounded-lg p-3">
+                  <h4 className="font-semibold text-sm text-white">{application.jobTitle}</h4>
+                  <p className="text-gray-300 text-xs">{application.companyName}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-400">
                       {formatDate(application.appliedAt)}
                     </span>
                     <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(application.status)}`}>
@@ -226,7 +226,7 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
               ))}
 
               {applications.length === 0 && (
-                <div className="text-center py-4 text-gray-500 text-sm">
+                <div className="text-center py-4 text-gray-400 text-sm">
                   No applications yet
                 </div>
               )}
@@ -237,17 +237,17 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
       {/* Job Details Dialog */}
       <Dialog open={showJobDetails} onOpenChange={setShowJobDetails}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-800 border-gray-700">
           {selectedJob && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedJob.title}</DialogTitle>
+                <DialogTitle className="text-2xl text-white">{selectedJob.title}</DialogTitle>
               </DialogHeader>
 
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">{selectedJob.companyName}</h3>
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mt-2">
+                  <h3 className="text-lg font-semibold text-white">{selectedJob.companyName}</h3>
+                  <div className="flex items-center gap-4 text-sm text-gray-300 mt-2">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {selectedJob.location}
@@ -265,18 +265,18 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
                 {selectedJob.salary && (
                   <div>
-                    <h4 className="font-semibold mb-2">Salary</h4>
-                    <p className="text-green-600 font-medium">{formatSalary(selectedJob.salary)}</p>
+                    <h4 className="font-semibold mb-2 text-white">Salary</h4>
+                    <p className="text-green-400 font-medium">{formatSalary(selectedJob.salary)}</p>
                   </div>
                 )}
 
                 <div>
-                  <h4 className="font-semibold mb-2">Job Description</h4>
-                  <p className="text-gray-700 whitespace-pre-line">{selectedJob.description}</p>
+                  <h4 className="font-semibold mb-2 text-white">Job Description</h4>
+                  <p className="text-gray-300 whitespace-pre-line">{selectedJob.description}</p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2">Required Skills</h4>
+                  <h4 className="font-semibold mb-2 text-white">Required Skills</h4>
                   <div className="flex flex-wrap gap-2">
                     {selectedJob.skills.map((skill) => (
                       <span
@@ -291,8 +291,8 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
                 {selectedJob.requirements && selectedJob.requirements.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-2">Requirements</h4>
-                    <ul className="list-disc list-inside space-y-1 text-gray-700">
+                    <h4 className="font-semibold mb-2 text-white">Requirements</h4>
+                    <ul className="list-disc list-inside space-y-1 text-gray-300">
                       {selectedJob.requirements.map((req, index) => (
                         <li key={index}>{req}</li>
                       ))}
@@ -302,7 +302,7 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
                 <div className="flex gap-4 pt-4">
                   {appliedJobs.has(selectedJob.id) ? (
-                    <div className="flex-1 px-4 py-2 bg-green-100 text-green-800 text-center rounded-md">
+                    <div className="flex-1 px-4 py-2 bg-green-900/50 text-green-300 text-center rounded-md">
                       Already Applied
                     </div>
                   ) : (

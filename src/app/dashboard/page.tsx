@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { authService, userService } from '@/services/firebase';
+import { authService } from '@/services/firebase';
 import { User } from '@/types';
 import JobFinderDashboard from '@/components/JobFinderDashboard';
 import CompanyDashboard from '@/components/CompanyDashboard';

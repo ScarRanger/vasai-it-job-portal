@@ -19,7 +19,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { User, JobFinder, Company, Job, Application } from '@/types';
+import { User, Job, Application } from '@/types';
 
 // Auth Services
 export const authService = {

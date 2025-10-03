@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,7 +15,7 @@ interface CompanyDashboardProps {
 
 export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateJob, setShowCreateJob] = useState(false);
   const [showApplications, setShowApplications] = useState(false);
@@ -37,11 +37,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
     deadline: '',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [userData.id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const jobsData = await jobService.getJobsByCompany(userData.id);
       setJobs(jobsData);
@@ -50,7 +46,11 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userData.id]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleCreateJob = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,42 +200,42 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
           <div className="flex items-center">
-            <Briefcase className="h-8 w-8 text-blue-600" />
+            <Briefcase className="h-8 w-8 text-blue-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-              <p className="text-2xl font-bold text-gray-900">{jobs.filter(job => job.isActive).length}</p>
+              <p className="text-sm font-medium text-gray-300">Active Jobs</p>
+              <p className="text-2xl font-bold text-white">{jobs.filter(job => job.isActive).length}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
           <div className="flex items-center">
-            <Users className="h-8 w-8 text-green-600" />
+            <Users className="h-8 w-8 text-green-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Applications</p>
-              <p className="text-2xl font-bold text-gray-900">{applications.length}</p>
+              <p className="text-sm font-medium text-gray-300">Total Applications</p>
+              <p className="text-2xl font-bold text-white">{applications.length}</p>
             </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
           <div className="flex items-center">
-            <Eye className="h-8 w-8 text-purple-600" />
+            <Eye className="h-8 w-8 text-purple-400" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Jobs Posted</p>
-              <p className="text-2xl font-bold text-gray-900">{jobs.length}</p>
+              <p className="text-sm font-medium text-gray-300">Total Jobs Posted</p>
+              <p className="text-2xl font-bold text-white">{jobs.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Jobs Section */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-gray-800 border border-gray-700 rounded-lg shadow">
+        <div className="px-6 py-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">Posted Jobs</h2>
+            <h2 className="text-xl font-bold text-white">Posted Jobs</h2>
             <Button onClick={() => setShowCreateJob(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Post New Job
@@ -246,9 +246,9 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
         <div className="p-6">
           {jobs.length === 0 ? (
             <div className="text-center py-8">
-              <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs posted yet</h3>
-              <p className="text-gray-600 mb-4">Start by posting your first job opening</p>
+              <Briefcase className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No jobs posted yet</h3>
+              <p className="text-gray-300 mb-4">Start by posting your first job opening</p>
               <Button onClick={() => setShowCreateJob(true)}>
                 Post Your First Job
               </Button>
@@ -256,9 +256,9 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
           ) : (
             <div className="space-y-4">
               {jobs.map((job) => (
-                <div key={job.id} className="border rounded-lg p-4">
+                <div key={job.id} className="border border-gray-600 bg-gray-700 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-blue-600">{job.title}</h3>
+                    <h3 className="text-lg font-semibold text-blue-400">{job.title}</h3>
                     <div className="flex items-center gap-2">
                       <span className={`px-2 py-1 rounded-full text-xs ${job.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                         {job.isActive ? 'Active' : 'Inactive'}
@@ -273,7 +273,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                  <div className="flex items-center gap-4 text-sm text-gray-300 mb-3">
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       {job.location}
@@ -308,7 +308,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
                     )}
                   </div>
 
-                  <p className="text-gray-600 text-sm line-clamp-2">
+                  <p className="text-gray-300 text-sm line-clamp-2">
                     {job.description}
                   </p>
                 </div>
@@ -320,9 +320,9 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
 
       {/* Create Job Dialog */}
       <Dialog open={showCreateJob} onOpenChange={setShowCreateJob}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle>Post New Job</DialogTitle>
+            <DialogTitle className="text-white">Post New Job</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleCreateJob} className="space-y-4">
@@ -342,7 +342,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
             />
 
             <div>
-              <label className="block text-sm font-medium mb-2">Requirements</label>
+              <label className="block text-sm font-medium mb-2 text-white">Requirements</label>
               {formData.requirements.map((req, index) => (
                 <div key={index} className="flex gap-2 mb-2">
                   <Input
@@ -366,7 +366,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Skills</label>
+              <label className="block text-sm font-medium mb-2 text-white">Skills</label>
               {formData.skills.map((skill, index) => (
                 <div key={index} className="flex gap-2 mb-2">
                   <Input
@@ -398,7 +398,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
               />
               
               <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.type}
                 onChange={(e) => setFormData({ ...formData, type: e.target.value as Job['type'] })}
               >
@@ -436,7 +436,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
                 })}
               />
               <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={formData.salary.currency}
                 onChange={(e) => setFormData({
                   ...formData,
@@ -473,24 +473,24 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
 
       {/* Applications Dialog */}
       <Dialog open={showApplications} onOpenChange={setShowApplications}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle>Job Applications</DialogTitle>
+            <DialogTitle className="text-white">Job Applications</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             {jobApplications.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-gray-400">
                 No applications for this job yet.
               </div>
             ) : (
               jobApplications.map((application) => (
-                <div key={application.id} className="border rounded-lg p-4">
+                <div key={application.id} className="border border-gray-600 bg-gray-700 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="font-semibold">{application.applicantName}</h4>
-                      <p className="text-gray-600 text-sm">{application.applicantEmail}</p>
-                      <p className="text-gray-500 text-xs">
+                      <h4 className="font-semibold text-white">{application.applicantName}</h4>
+                      <p className="text-gray-300 text-sm">{application.applicantEmail}</p>
+                      <p className="text-gray-400 text-xs">
                         Applied on {formatDate(application.appliedAt)}
                       </p>
                     </div>
@@ -501,8 +501,8 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
 
                   {application.coverLetter && (
                     <div className="mb-3">
-                      <h5 className="font-medium text-sm mb-1">Cover Letter</h5>
-                      <p className="text-gray-700 text-sm">{application.coverLetter}</p>
+                      <h5 className="font-medium text-sm mb-1 text-white">Cover Letter</h5>
+                      <p className="text-gray-300 text-sm">{application.coverLetter}</p>
                     </div>
                   )}
 

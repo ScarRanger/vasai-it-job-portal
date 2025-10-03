@@ -5,7 +5,7 @@ import { getAuth } from 'firebase-admin/auth';
 // Server-side service account configuration
 const getServiceAccountConfig = () => {
   const serviceAccountBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  
+
   if (!serviceAccountBase64) {
     console.warn('Firebase service account key not found. Using default credentials.');
     return null;
@@ -15,7 +15,7 @@ const getServiceAccountConfig = () => {
     // Decode base64 service account key
     const serviceAccountJson = Buffer.from(serviceAccountBase64, 'base64').toString('utf8');
     const serviceAccount = JSON.parse(serviceAccountJson);
-    
+
     return {
       projectId: serviceAccount.project_id,
       clientEmail: serviceAccount.client_email,
@@ -27,36 +27,28 @@ const getServiceAccountConfig = () => {
   }
 };
 
-// Initialize Firebase Admin
-let adminApp: App;
-
-const initializeFirebaseAdmin = () => {
+// Initialize Firebase Admin safely
+const initializeFirebaseAdmin = (): App => {
   if (getApps().length > 0) {
-    return getApps()[0];
+    return getApps()[0]!;
   }
 
   const serviceAccountConfig = getServiceAccountConfig();
-  
+
   if (serviceAccountConfig) {
-    // Initialize with service account credentials
-    adminApp = initializeApp({
+    return initializeApp({
       credential: cert(serviceAccountConfig),
       projectId: serviceAccountConfig.projectId,
     });
   } else {
-    // Initialize with default credentials (for local development)
-    adminApp = initializeApp({
+    return initializeApp({
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
   }
-  
-  return adminApp;
 };
 
-// Initialize the admin app
-if (typeof window === 'undefined') {
-  adminApp = initializeFirebaseAdmin();
-}
+// Ensure adminApp is always assigned
+const adminApp: App = typeof window === 'undefined' ? initializeFirebaseAdmin() : ({} as App);
 
 // Export admin services
 export const adminDb = typeof window === 'undefined' ? getFirestore(adminApp) : null;
@@ -69,7 +61,7 @@ export const verifyIdToken = async (idToken: string) => {
   if (typeof window !== 'undefined' || !adminAuth) {
     throw new Error('This function can only be called server-side');
   }
-  
+
   try {
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     return decodedToken;
@@ -84,7 +76,7 @@ export const getUserByUid = async (uid: string) => {
   if (typeof window !== 'undefined' || !adminAuth) {
     throw new Error('This function can only be called server-side');
   }
-  
+
   try {
     const userRecord = await adminAuth.getUser(uid);
     return userRecord;
