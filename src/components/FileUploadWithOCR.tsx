@@ -39,7 +39,7 @@ export default function FileUploadWithOCR({
     setError('');
     setVerificationResult(null);
 
-    // Check file type
+    // Check file type - PDF support restored with CDN loading
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
     if (!allowedTypes.includes(file.type)) {
       setError('Please upload a PDF, JPG, or PNG file');
