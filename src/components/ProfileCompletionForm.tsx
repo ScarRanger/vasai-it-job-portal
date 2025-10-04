@@ -21,7 +21,6 @@ export default function ProfileCompletionForm({ user, onProfileCompleted }: Prof
 
   // Job Finder specific state
   const [jobFinderData, setJobFinderData] = useState({
-    name: '',
     experience: '',
     location: '',
     skills: [''],
@@ -86,10 +85,6 @@ export default function ProfileCompletionForm({ user, onProfileCompleted }: Prof
 
   const validateJobFinderForm = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!jobFinderData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
 
     if (!jobFinderData.experience.trim()) {
       newErrors.experience = 'Experience is required';
@@ -162,7 +157,7 @@ export default function ProfileCompletionForm({ user, onProfileCompleted }: Prof
         const resumeUrl = jobFinderData.resume ? `resumes/${Date.now()}_${jobFinderData.resume.name}` : '';
         
         updatedUserData = {
-          name: jobFinderData.name,
+          name: user.name, // Use existing name from registration
           experience: jobFinderData.experience,
           location: jobFinderData.location,
           skills: jobFinderData.skills.filter(skill => skill.trim() !== ''),
@@ -218,20 +213,6 @@ export default function ProfileCompletionForm({ user, onProfileCompleted }: Prof
                 <div className="flex items-center gap-2 text-primary mb-4">
                   <UserIcon className="w-5 h-5" />
                   <h3 className="text-lg font-semibold">Personal Information</h3>
-                </div>
-
-                {/* Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-foreground">Full Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Your full name"
-                    value={jobFinderData.name}
-                    onChange={(e) => setJobFinderData({ ...jobFinderData, name: e.target.value })}
-                    className="bg-input border-border text-foreground"
-                    required
-                  />
-                  {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
                 </div>
 
                 {/* Experience */}

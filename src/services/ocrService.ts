@@ -1,6 +1,19 @@
-'use client';
-
 import Tesseract from 'tesseract.js';
+
+// Dynamic import for PDF.js to avoid SSR issues
+let pdfjsLib: typeof import('pdfjs-dist') | null = null;
+
+// Initialize PDF.js only on client side
+const initPdfJs = async (): Promise<typeof import('pdfjs-dist')> => {
+  if (typeof window !== 'undefined' && !pdfjsLib) {
+    pdfjsLib = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
+  }
+  if (!pdfjsLib) {
+    throw new Error('PDF.js not available on server side');
+  }
+  return pdfjsLib;
+};
 
 // Valid locations for Vasai region
 const VALID_LOCATIONS = [
@@ -27,6 +40,52 @@ export interface OCRVerificationResult {
 
 export const ocrService = {
   /**
+   * Convert PDF to images
+   * @param file - PDF file
+   * @returns Promise<HTMLCanvasElement[]>
+   */
+  async convertPdfToImages(file: File): Promise<HTMLCanvasElement[]> {
+    try {
+      // Initialize PDF.js dynamically
+      const pdfjs = await initPdfJs();
+      
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+      const images: HTMLCanvasElement[] = [];
+
+      // Process only the first page for address verification
+      // In production, you might want to process multiple pages
+      const pageNum = Math.min(1, pdf.numPages);
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        throw new Error('Could not get canvas context for PDF processing');
+      }
+
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport,
+        canvas: canvas
+      };
+
+      await page.render(renderContext).promise;
+      images.push(canvas);
+
+      return images;
+    } catch (error) {
+      console.error('PDF conversion error:', error);
+      throw new Error(`Failed to process PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+
+  /**
    * Verify address proof document using OCR
    * @param file - The uploaded file (PDF, JPG, PNG)
    * @param providedName - The name provided by the user
@@ -34,26 +93,46 @@ export const ocrService = {
    */
   async verifyAddressProof(file: File, providedName?: string): Promise<OCRVerificationResult> {
     try {
-      // Convert file to image if it's a PDF (simplified - in production use PDF.js)
-      const imageFile = file;
-      
-      if (file.type === 'application/pdf') {
-        throw new Error('PDF processing not implemented yet. Please upload JPG or PNG.');
+      // Check if we're on the client side for PDF processing
+      if (file.type === 'application/pdf' && typeof window === 'undefined') {
+        throw new Error('PDF processing is only available on client side');
       }
 
-      // Perform OCR on the image
-      const { data: { text } } = await Tesseract.recognize(
-        imageFile,
-        'eng'
-      );
+      let imagesToProcess: (File | HTMLCanvasElement)[] = [];
+      
+      if (file.type === 'application/pdf') {
+        console.log('Processing PDF file...');
+        // Convert PDF to images
+        const pdfImages = await this.convertPdfToImages(file);
+        imagesToProcess = pdfImages;
+        console.log(`PDF converted to ${pdfImages.length} image(s)`);
+      } else {
+        // Use the image file directly
+        imagesToProcess = [file];
+        console.log('Processing image file...');
+      }
+
+      // Process all images (for PDF, we'll just process the first page)
+      let allText = '';
+      
+      for (let i = 0; i < imagesToProcess.length; i++) {
+        const imageSource = imagesToProcess[i];
+        console.log(`Running OCR on image ${i + 1}/${imagesToProcess.length}...`);
+        
+        const { data: { text } } = await Tesseract.recognize(
+          imageSource,
+          'eng'
+        );
+        allText += text + ' ';
+      }
 
       // Clean and normalize extracted text
-      const cleanText = text.toLowerCase()
+      const cleanText = allText.toLowerCase()
         .replace(/[^\w\s]/g, ' ') // Remove special characters
         .replace(/\s+/g, ' ') // Replace multiple spaces with single space
         .trim();
 
-      console.log('Extracted text:', cleanText);
+      console.log('OCR completed. Extracted text:', cleanText.substring(0, 200) + '...');
 
       // Check for valid locations
       const foundLocations: string[] = [];
@@ -103,7 +182,7 @@ export const ocrService = {
 
       return {
         isValid,
-        extractedText: text,
+        extractedText: allText,
         foundLocations,
         nameMatched,
         extractedName,
