@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Users, Search, MapPin, CheckCircle, ArrowRight, Star } from 'lucide-react';
 import { SimpleThemeToggle } from '@/components/theme-toggle';
 import AuthFlow from './AuthFlow';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LandingPage() {
   const [showAuth, setShowAuth] = useState(false);
+  const { user, loading } = useAuth();
+
+  // Automatically show auth flow for authenticated users
+  // (page.tsx only renders LandingPage for users with incomplete profiles)
+  useEffect(() => {
+    if (!loading && user) {
+      setShowAuth(true);
+    }
+  }, [user, loading]);
 
   if (showAuth) {
     return <AuthFlow />;
