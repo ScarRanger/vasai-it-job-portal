@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authService } from '@/services/firebase';
-import { ocrService } from '@/services/ocrService';
 import { User } from '@/types';
-import { Upload, Eye, EyeOff, Mail, Phone, FileText, CheckCircle, XCircle, Loader2, UserIcon } from 'lucide-react';
+import { Eye, EyeOff, Mail, Phone, UserIcon } from 'lucide-react';
+import FileUploadWithOCR from './FileUploadWithOCR';
 
 interface InitialRegistrationFormProps {
   onRegistrationSuccess: (user: User) => void;
@@ -33,7 +33,6 @@ export default function InitialRegistrationForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [ocrVerifying, setOcrVerifying] = useState(false);
   const [addressVerificationResult, setAddressVerificationResult] = useState<{
     isValid: boolean;
     message: string;
@@ -84,58 +83,6 @@ export default function InitialRegistrationForm({
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check file type (JPG, PNG only for now)
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        setErrors({ ...errors, addressProof: 'Please upload a JPG or PNG file' });
-        return;
-      }
-      
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors({ ...errors, addressProof: 'File size must be less than 5MB' });
-        return;
-      }
-
-      setFormData({ ...formData, addressProof: file });
-      setErrors({ ...errors, addressProof: '' });
-
-      // Perform OCR verification for job seekers
-      if (userType === 'job_finder') {
-        setOcrVerifying(true);
-        try {
-          const verificationResult = await ocrService.verifyAddressProof(file, formData.name);
-          
-          if (verificationResult.isValid) {
-            setAddressVerificationResult({
-              isValid: true,
-              message: `Verification successful! Address: ${verificationResult.foundLocations.join(', ')}${
-                verificationResult.nameMatched ? `, Name: ${verificationResult.extractedName}` : ''
-              }`,
-              foundLocations: verificationResult.foundLocations
-            });
-          } else {
-            setAddressVerificationResult({
-              isValid: false,
-              message: verificationResult.error || 'Verification failed'
-            });
-          }
-        } catch (err) {
-          console.error('OCR verification error:', err);
-          setAddressVerificationResult({
-            isValid: false,
-            message: 'OCR verification failed. Please try again.'
-          });
-        } finally {
-          setOcrVerifying(false);
-        }
-      }
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -248,7 +195,7 @@ export default function InitialRegistrationForm({
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Full Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-white">
+                  <Label htmlFor="name" className="text-foreground font-medium">
                     <UserIcon className="w-4 h-4 inline mr-2" />
                     Full Name
                   </Label>
@@ -266,7 +213,7 @@ export default function InitialRegistrationForm({
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-white">
+                  <Label htmlFor="email" className="text-foreground font-medium">
                     <Mail className="w-4 h-4 inline mr-2" />
                     Email Address
                   </Label>
@@ -284,7 +231,7 @@ export default function InitialRegistrationForm({
 
                 {/* Phone */}
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-white">
+                  <Label htmlFor="phone" className="text-foreground font-medium">
                     <Phone className="w-4 h-4 inline mr-2" />
                     Phone Number
                   </Label>
@@ -302,7 +249,7 @@ export default function InitialRegistrationForm({
 
                 {/* Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-white">Password</Label>
+                  <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -328,7 +275,7 @@ export default function InitialRegistrationForm({
 
                 {/* Confirm Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-white">Confirm Password</Label>
+                  <Label htmlFor="confirmPassword" className="text-foreground font-medium">Confirm Password</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -354,58 +301,19 @@ export default function InitialRegistrationForm({
 
                 {/* Address Proof Upload - Only for Job Seekers */}
                 {userType === 'job_finder' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="addressProof" className="text-white">
-                      <FileText className="w-4 h-4 inline mr-2" />
-                      Address Proof Document
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="addressProof"
-                        type="file"
-                        accept=".jpg,.jpeg,.png"
-                        onChange={handleFileUpload}
-                        className="bg-input border-border text-foreground file:bg-muted file:text-foreground file:border-0"
-                        required
-                      />
-                      <div className="absolute right-2 top-2">
-                        {ocrVerifying ? (
-                          <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
-                        ) : (
-                          <Upload className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Upload Aadhar, Passport, or Utility Bill from Vasai region (JPG, PNG - Max 5MB)
-                      <br />
-                      <strong>Note:</strong> Document will be verified for both address and name match
-                    </p>
-                    {formData.addressProof && (
-                      <p className="text-green-400 text-sm">
-                        ✓ {formData.addressProof.name} selected
-                      </p>
-                    )}
-                    {ocrVerifying && (
-                      <p className="text-blue-400 text-sm flex items-center">
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Verifying address and name match...
-                      </p>
-                    )}
-                    {addressVerificationResult && (
-                      <div className={`text-sm flex items-center ${
-                        addressVerificationResult.isValid ? 'text-green-400' : 'text-red-400'
-                      }`}>
-                        {addressVerificationResult.isValid ? (
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mr-2" />
-                        )}
-                        {addressVerificationResult.message}
-                      </div>
-                    )}
-                    {errors.addressProof && <p className="text-red-400 text-sm">{errors.addressProof}</p>}
-                  </div>
+                  <FileUploadWithOCR
+                    onFileVerified={(result) => {
+                      setFormData({ ...formData, addressProof: result.file });
+                      setAddressVerificationResult(result);
+                      if (!result.isValid) {
+                        setErrors({ ...errors, addressProof: result.message });
+                      } else {
+                        setErrors({ ...errors, addressProof: '' });
+                      }
+                    }}
+                    userName={formData.name}
+                    disabled={loading}
+                  />
                 )}
 
                 {errors.submit && (
