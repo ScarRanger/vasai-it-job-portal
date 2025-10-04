@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { jobService, applicationService } from '@/services/firebase';
 import { Job, Application, User } from '@/types';
-import { Plus, MapPin, Clock, DollarSign, Briefcase, Users, Eye } from 'lucide-react';
+import { Plus, MapPin, Clock, DollarSign, Briefcase, Users, Eye, X, Calendar } from 'lucide-react';
 
 interface CompanyDashboardProps {
   userData: User;
@@ -166,14 +168,14 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
     });
   };
 
-  const getStatusColor = (status: Application['status']) => {
+  const getStatusBadgeVariant = (status: Application['status']) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      case 'reviewing': return 'text-blue-600 bg-blue-100';
-      case 'shortlisted': return 'text-green-600 bg-green-100';
-      case 'rejected': return 'text-red-600 bg-red-100';
-      case 'hired': return 'text-purple-600 bg-purple-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'pending': return 'warning';
+      case 'reviewing': return 'info';
+      case 'shortlisted': return 'success';
+      case 'rejected': return 'destructive';
+      case 'hired': return 'default';
+      default: return 'secondary';
     }
   };
 
@@ -197,58 +199,92 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container-responsive py-6 space-y-6">
+      {/* Welcome Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            Welcome back, {userData.name}
+          </h1>
+          <p className="text-muted-foreground">
+            Manage your job postings and applications
+          </p>
+        </div>
+        <Button onClick={() => setShowCreateJob(true)} className="w-full sm:w-auto">
+          <Plus className="h-4 w-4 mr-2" />
+          Post New Job
+        </Button>
+      </div>
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <Briefcase className="h-8 w-8 text-blue-400" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-300">Active Jobs</p>
-              <p className="text-2xl font-bold text-white">{jobs.filter(job => job.isActive).length}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {jobs.filter(job => job.isActive).length}
             </div>
-          </div>
-        </div>
+            <p className="text-xs text-muted-foreground">
+              Currently accepting applications
+            </p>
+          </CardContent>
+        </Card>
         
-        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <Users className="h-8 w-8 text-green-400" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-300">Total Applications</p>
-              <p className="text-2xl font-bold text-white">{applications.length}</p>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{applications.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Across all job postings
+            </p>
+          </CardContent>
+        </Card>
         
-        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <Eye className="h-8 w-8 text-purple-400" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-300">Total Jobs Posted</p>
-              <p className="text-2xl font-bold text-white">{jobs.length}</p>
-            </div>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Jobs Posted</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{jobs.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Including inactive listings
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Jobs Section */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">Posted Jobs</h2>
-            <Button onClick={() => setShowCreateJob(true)}>
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Posted Jobs</CardTitle>
+              <CardDescription>
+                View and manage your job postings
+              </CardDescription>
+            </div>
+            <Button onClick={() => setShowCreateJob(true)} size="sm" className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
-              Post New Job
+              Post Job
             </Button>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="p-6">
+        <CardContent>
           {jobs.length === 0 ? (
-            <div className="text-center py-8">
-              <Briefcase className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">No jobs posted yet</h3>
-              <p className="text-gray-300 mb-4">Start by posting your first job opening</p>
+            <div className="text-center py-12">
+              <Briefcase className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-foreground mb-2">No jobs posted yet</h3>
+              <p className="text-muted-foreground mb-4 max-w-sm mx-auto">
+                Start by posting your first job opening to attract talented candidates
+              </p>
               <Button onClick={() => setShowCreateJob(true)}>
                 Post Your First Job
               </Button>
@@ -256,206 +292,240 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
           ) : (
             <div className="space-y-4">
               {jobs.map((job) => (
-                <div key={job.id} className="border border-gray-600 bg-gray-700 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-blue-400">{job.title}</h3>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${job.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {job.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewApplications(job.id)}
-                      >
-                        View Applications
-                      </Button>
+                <Card key={job.id} className="border-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="space-y-2">
+                        <CardTitle className="text-lg text-primary">
+                          {job.title}
+                        </CardTitle>
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {job.location}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Briefcase className="h-3 w-3" />
+                            {job.type}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            {formatSalary(job.salary)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            Posted {formatDate(job.postedAt)}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <Badge variant={job.isActive ? 'success' : 'secondary'}>
+                          {job.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleViewApplications(job.id)}
+                          className="w-full sm:w-auto"
+                        >
+                          <Eye className="h-3 w-3 mr-2" />
+                          View Applications
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4 text-sm text-gray-300 mb-3">
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {job.location}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Briefcase className="h-4 w-4" />
-                      {job.type}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-4 w-4" />
-                      {formatSalary(job.salary)}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      Posted {formatDate(job.postedAt)}
-                    </div>
-                  </div>
+                  </CardHeader>
 
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {job.skills.slice(0, 5).map((skill) => (
-                      <span
-                        key={skill}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {job.skills.length > 5 && (
-                      <span className="text-xs text-gray-500">
-                        +{job.skills.length - 5} more
-                      </span>
-                    )}
-                  </div>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-1">
+                        {job.skills.slice(0, 5).map((skill) => (
+                          <Badge key={skill} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {job.skills.length > 5 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{job.skills.length - 5} more
+                          </Badge>
+                        )}
+                      </div>
 
-                  <p className="text-gray-300 text-sm line-clamp-2">
-                    {job.description}
-                  </p>
-                </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {job.description}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Create Job Dialog */}
       <Dialog open={showCreateJob} onOpenChange={setShowCreateJob}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-gray-800 border-gray-700">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">Post New Job</DialogTitle>
+            <DialogTitle>Post New Job</DialogTitle>
+            <DialogDescription>
+              Create a new job posting to attract qualified candidates to your company.
+            </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateJob} className="space-y-4">
-            <Input
-              placeholder="Job Title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-            />
-
-            <Textarea
-              placeholder="Job Description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              required
-            />
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">Requirements</label>
-              {formData.requirements.map((req, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <Input
-                    placeholder="Requirement"
-                    value={req}
-                    onChange={(e) => updateRequirement(index, e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeRequirement(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addRequirement}>
-                Add Requirement
-              </Button>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2 text-white">Skills</label>
-              {formData.skills.map((skill, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <Input
-                    placeholder="Skill"
-                    value={skill}
-                    onChange={(e) => updateSkill(index, e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeSkill(index)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addSkill}>
-                Add Skill
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleCreateJob} className="space-y-6">
+            <div className="space-y-4">
               <Input
-                placeholder="Location"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                label="Job Title"
+                placeholder="e.g. Senior Software Engineer"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
               />
-              
-              <select
-                className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as Job['type'] })}
-              >
-                <option value="full-time">Full Time</option>
-                <option value="part-time">Part Time</option>
-                <option value="contract">Contract</option>
-                <option value="internship">Internship</option>
-              </select>
+
+              <Textarea
+                label="Job Description"
+                placeholder="Describe the role, responsibilities, and what makes your company great..."
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                required
+              />
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">Requirements</label>
+                {formData.requirements.map((req, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder="e.g. Bachelor's degree in Computer Science"
+                      value={req}
+                      onChange={(e) => updateRequirement(index, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeRequirement(index)}
+                      disabled={formData.requirements.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={addRequirement} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Requirement
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">Required Skills</label>
+                {formData.skills.map((skill, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder="e.g. React, Node.js, TypeScript"
+                      value={skill}
+                      onChange={(e) => updateSkill(index, e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeSkill(index)}
+                      disabled={formData.skills.length === 1}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={addSkill} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Skill
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Location"
+                  placeholder="e.g. Vasai, Mumbai"
+                  value={formData.location}
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  required
+                />
+                
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-foreground">Job Type</label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as Job['type'] })}
+                  >
+                    <option value="full-time">Full Time</option>
+                    <option value="part-time">Part Time</option>
+                    <option value="contract">Contract</option>
+                    <option value="internship">Internship</option>
+                  </select>
+                </div>
+              </div>
+
+              <Input
+                label="Experience Required"
+                placeholder="e.g. 2-5 years"
+                value={formData.experience}
+                onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                required
+              />
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">Salary Range (Optional)</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    type="number"
+                    placeholder="Min Salary"
+                    value={formData.salary.min || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      salary: { ...formData.salary, min: parseInt(e.target.value) || 0 }
+                    })}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Max Salary"
+                    value={formData.salary.max || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      salary: { ...formData.salary, max: parseInt(e.target.value) || 0 }
+                    })}
+                  />
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    value={formData.salary.currency}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      salary: { ...formData.salary, currency: e.target.value }
+                    })}
+                  >
+                    <option value="INR">INR</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Application Deadline (Optional)
+                </label>
+                <Input
+                  type="date"
+                  value={formData.deadline}
+                  onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                />
+              </div>
             </div>
 
-            <Input
-              placeholder="Experience Required"
-              value={formData.experience}
-              onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-              required
-            />
-
-            <div className="grid grid-cols-3 gap-4">
-              <Input
-                type="number"
-                placeholder="Min Salary"
-                value={formData.salary.min || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  salary: { ...formData.salary, min: parseInt(e.target.value) || 0 }
-                })}
-              />
-              <Input
-                type="number"
-                placeholder="Max Salary"
-                value={formData.salary.max || ''}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  salary: { ...formData.salary, max: parseInt(e.target.value) || 0 }
-                })}
-              />
-              <select
-                className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-800 text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={formData.salary.currency}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  salary: { ...formData.salary, currency: e.target.value }
-                })}
-              >
-                <option value="INR">INR</option>
-                <option value="USD">USD</option>
-              </select>
-            </div>
-
-            <Input
-              type="date"
-              placeholder="Application Deadline"
-              value={formData.deadline}
-              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-            />
-
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button type="submit" className="flex-1">
                 Post Job
               </Button>
@@ -463,6 +533,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
                 type="button"
                 variant="outline"
                 onClick={() => setShowCreateJob(false)}
+                className="flex-1 sm:flex-none"
               >
                 Cancel
               </Button>
@@ -473,73 +544,88 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
 
       {/* Applications Dialog */}
       <Dialog open={showApplications} onOpenChange={setShowApplications}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto bg-gray-800 border-gray-700">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-white">Job Applications</DialogTitle>
+            <DialogTitle>Job Applications</DialogTitle>
+            <DialogDescription>
+              Review and manage applications for your job postings.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             {jobApplications.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                No applications for this job yet.
+              <div className="text-center py-12">
+                <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No applications yet</h3>
+                <p className="text-muted-foreground">
+                  Applications will appear here once candidates start applying
+                </p>
               </div>
             ) : (
               jobApplications.map((application) => (
-                <div key={application.id} className="border border-gray-600 bg-gray-700 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h4 className="font-semibold text-white">{application.applicantName}</h4>
-                      <p className="text-gray-300 text-sm">{application.applicantEmail}</p>
-                      <p className="text-gray-400 text-xs">
-                        Applied on {formatDate(application.appliedAt)}
-                      </p>
+                <Card key={application.id}>
+                  <CardHeader>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="space-y-2">
+                        <CardTitle className="text-lg">{application.applicantName}</CardTitle>
+                        <div className="space-y-1">
+                          <p className="text-sm text-muted-foreground">{application.applicantEmail}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Applied on {formatDate(application.appliedAt)}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={getStatusBadgeVariant(application.status)}>
+                        {application.status}
+                      </Badge>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(application.status)}`}>
-                      {application.status}
-                    </span>
-                  </div>
+                  </CardHeader>
 
-                  {application.coverLetter && (
-                    <div className="mb-3">
-                      <h5 className="font-medium text-sm mb-1 text-white">Cover Letter</h5>
-                      <p className="text-gray-300 text-sm">{application.coverLetter}</p>
+                  <CardContent className="space-y-4">
+                    {application.coverLetter && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-sm">Cover Letter</h5>
+                        <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+                          {application.coverLetter}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleUpdateApplicationStatus(application.id, 'reviewing')}
+                        disabled={application.status === 'reviewing'}
+                      >
+                        Review
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleUpdateApplicationStatus(application.id, 'shortlisted')}
+                        disabled={application.status === 'shortlisted'}
+                      >
+                        Shortlist
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleUpdateApplicationStatus(application.id, 'rejected')}
+                        disabled={application.status === 'rejected'}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleUpdateApplicationStatus(application.id, 'hired')}
+                        disabled={application.status === 'hired'}
+                      >
+                        Hire
+                      </Button>
                     </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUpdateApplicationStatus(application.id, 'reviewing')}
-                      disabled={application.status === 'reviewing'}
-                    >
-                      Mark as Reviewing
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUpdateApplicationStatus(application.id, 'shortlisted')}
-                      disabled={application.status === 'shortlisted'}
-                    >
-                      Shortlist
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUpdateApplicationStatus(application.id, 'rejected')}
-                      disabled={application.status === 'rejected'}
-                    >
-                      Reject
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => handleUpdateApplicationStatus(application.id, 'hired')}
-                      disabled={application.status === 'hired'}
-                    >
-                      Hire
-                    </Button>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               ))
             )}
           </div>

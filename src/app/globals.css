@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  /* Dark mode variables */
+  /* Enhanced dark mode color system */
   --background: #0a0a0a;
-  --foreground: #ededed;
+  --foreground: #fafafa;
   --card: #1a1a1a;
-  --card-foreground: #ededed;
+  --card-foreground: #fafafa;
   --popover: #1a1a1a;
-  --popover-foreground: #ededed;
+  --popover-foreground: #fafafa;
   --primary: #3b82f6;
   --primary-foreground: #f8fafc;
   --secondary: #262626;
-  --secondary-foreground: #ededed;
+  --secondary-foreground: #fafafa;
   --muted: #262626;
   --muted-foreground: #a3a3a3;
   --accent: #1e40af;
@@ -22,17 +22,47 @@
   --input: #404040;
   --ring: #3b82f6;
   --radius: 0.5rem;
+  
+  /* Additional semantic colors */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #3b82f6;
+}
+
+/* Base typography and layout */
+html {
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-geist-sans);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base styles for better appearance */
+/* Global element styles */
 * {
   border-color: var(--border);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 /* Loading spinner animation */
@@ -46,24 +76,105 @@ body {
   animation: spin 1s linear infinite;
 }
 
-/* Dark mode card styles */
-.bg-white {
-  background-color: var(--card) !important;
-  color: var(--card-foreground) !important;
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-/* Dark mode gradient overrides */
-.bg-gradient-to-br {
-  background: linear-gradient(to bottom right, #1a1a1a, #0f172a) !important;
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-/* Dark blue section override */
-.bg-blue-600 {
-  background-color: #1e40af !important;
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom utility classes */
+.container-responsive {
+  width: 100%;
+  max-width: 1536px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Form elements improvements */
+input:autofill,
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px var(--input) inset;
+  -webkit-text-fill-color: var(--foreground);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Print styles */
+@media print {
+  * {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
