@@ -76,7 +76,12 @@ export default function LandingPage() {
       } else {
         await authService.signIn(formData.email, formData.password);
       }
-      router.push('/dashboard');
+      
+      // Close the dialog first
+      setShowAuth(false);
+      
+      // Don't navigate immediately - let the auth state change handle it
+      // The useEffect in page.tsx will handle the redirect automatically
     } catch (error: unknown) {
       console.error('Auth error:', error);
       let errorMessage = 'Authentication failed. Please try again.';
