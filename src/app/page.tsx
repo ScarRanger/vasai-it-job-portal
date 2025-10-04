@@ -42,7 +42,7 @@ export default function Home() {
     };
 
     checkProfileAndRedirect();
-  }, [user, loading, router, isRedirecting]);
+  }, [user, loading, router, isRedirecting, checkingProfile]);
 
   if (loading || checkingProfile) {
     return (

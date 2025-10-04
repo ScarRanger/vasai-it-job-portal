@@ -36,7 +36,7 @@ export default function AuthFlow() {
     };
 
     checkAuthenticatedUserProfile();
-  }, [user, loading]);
+  }, [user, loading, checkingAuthUser]);
 
   const handleLoginSuccess = () => {
     // Login successful, let the main page handle profile checking and redirection
