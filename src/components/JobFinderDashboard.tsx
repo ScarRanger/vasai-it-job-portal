@@ -77,7 +77,7 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
         jobTitle: job.title,
         companyName: job.companyName,
         applicantId: userData.id,
-        applicantName: userData.name,
+        applicantName: userData.name || 'Unknown User',
         applicantEmail: userData.email,
       };
 

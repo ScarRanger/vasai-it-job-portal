@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@plugin "tailwindcss-animate";
+/* Removed invalid line causing syntax error */
 
 @custom-variant dark (&:is(.dark *));
 

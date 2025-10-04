@@ -190,7 +190,7 @@ export default function ShadcnDemo() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground">
-                    We're looking for a talented frontend developer to join our team...
+                    We&apos;re looking for a talented frontend developer to join our team...
                   </p>
                   <Separator className="my-4" />
                   <div className="flex gap-2">
@@ -372,7 +372,7 @@ export default function ShadcnDemo() {
                       <DialogHeader>
                         <DialogTitle>Contact Us</DialogTitle>
                         <DialogDescription>
-                          Get in touch with our team. We'll respond within 24 hours.
+                          Get in touch with our team. We&apos;ll respond within 24 hours.
                         </DialogDescription>
                       </DialogHeader>
                       <div className="grid gap-4 py-4">

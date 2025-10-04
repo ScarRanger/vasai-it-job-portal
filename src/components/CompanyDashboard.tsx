@@ -60,7 +60,7 @@ export default function CompanyDashboard({ userData }: CompanyDashboardProps) {
     try {
       const jobData: Omit<Job, 'id' | 'postedAt'> = {
         companyId: userData.id,
-        companyName: userData.name,
+        companyName: userData.name || 'Unknown Company',
         title: formData.title,
         description: formData.description,
         requirements: formData.requirements.filter(req => req.trim() !== ''),

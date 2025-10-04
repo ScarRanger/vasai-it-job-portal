@@ -1,28 +1,33 @@
 export interface User {
   id: string;
   email: string;
-  name: string;
+  phone: string;
+  name?: string; // Optional, could be either user name or contact person name
+  password?: string; // Only for registration, not stored
+  addressProof?: string; // URL to uploaded document
   userType: 'job_finder' | 'company';
   createdAt: Date;
+  profileCompleted: boolean; // New field to track profile completion
 }
 
 export interface JobFinder extends User {
   userType: 'job_finder';
+  name?: string; // Optional until profile completion
   resume?: string;
-  skills: string[];
-  experience: string;
-  location: string;
-  phone?: string;
+  skills?: string[];
+  experience?: string;
+  location?: string;
 }
 
 export interface Company extends User {
   userType: 'company';
-  companyName: string;
-  description: string;
+  companyName?: string; // Optional until profile completion
+  contactPersonName?: string;
+  description?: string;
   website?: string;
-  location: string;
-  industry: string;
-  size: string;
+  location?: string;
+  industry?: string;
+  size?: string;
 }
 
 export interface Job {
