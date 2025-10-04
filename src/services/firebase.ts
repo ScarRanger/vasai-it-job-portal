@@ -21,6 +21,17 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { User, Job, Application } from '@/types';
 
+// Helper function to remove undefined values from an object
+const cleanUndefinedValues = (obj: Record<string, unknown>): Record<string, unknown> => {
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+};
+
 // Auth Services
 export const authService = {
   async signUp(email: string, password: string, userData: Partial<User>) {
@@ -31,13 +42,15 @@ export const authService = {
     );
     const user = userCredential.user;
 
-    // Save user data to Firestore
-    await setDoc(doc(db, 'users', user.uid), {
+    // Save user data to Firestore (clean undefined values)
+    const cleanUserData = cleanUndefinedValues({
       ...userData,
       id: user.uid,
       email: user.email,
       createdAt: Timestamp.now(),
     });
+    
+    await setDoc(doc(db, 'users', user.uid), cleanUserData);
 
     return user;
   },
@@ -70,7 +83,8 @@ export const userService = {
   },
 
   async updateUser(userId: string, data: Partial<User>) {
-    return updateDoc(doc(db, 'users', userId), data);
+    const cleanData = cleanUndefinedValues(data);
+    return updateDoc(doc(db, 'users', userId), cleanData);
   },
 };
 

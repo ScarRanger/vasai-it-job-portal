@@ -4,7 +4,9 @@ export interface User {
   phone: string;
   name?: string; // Optional, could be either user name or contact person name
   password?: string; // Only for registration, not stored
-  addressProof?: string; // URL to uploaded document
+  addressProof?: string; // URL to uploaded document (only for job_finder)
+  addressVerified?: boolean; // Address verification status (only for job_finder)
+  addressVerificationError?: string; // OCR verification error message
   userType: 'job_finder' | 'company';
   createdAt: Date;
   profileCompleted: boolean; // New field to track profile completion
@@ -17,6 +19,9 @@ export interface JobFinder extends User {
   skills?: string[];
   experience?: string;
   location?: string;
+  addressProof: string; // Required for job finders
+  addressVerified: boolean; // Address verification status
+  addressVerificationError?: string; // OCR verification error message
 }
 
 export interface Company extends User {

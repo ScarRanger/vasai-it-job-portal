@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { jobService, applicationService } from '@/services/firebase';
 import { Job, Application, User } from '@/types';
-import { Search, MapPin, Clock, DollarSign, Briefcase, Filter, CheckCircle, Building, Calendar } from 'lucide-react';
+import { Search, MapPin, Clock, DollarSign, Briefcase, Filter, CheckCircle, Building, Calendar, Lock, AlertTriangle } from 'lucide-react';
 
 interface JobFinderDashboardProps {
   userData: User;
@@ -138,8 +138,32 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
 
   const stats = getApplicationStats();
 
+  // Check if user's address is verified
+  const isAddressVerified = userData.addressVerified === true;
+
   return (
     <div className="container-responsive py-6 space-y-6">
+      {/* Address Verification Banner */}
+      {!isAddressVerified && (
+        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-800 dark:text-amber-200">
+                  Address Verification Required
+                </h3>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  {userData.addressVerificationError || 
+                   'Your address needs to be verified to access all job features. Please contact support or re-upload your address proof.'}
+                </p>
+              </div>
+              <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Welcome Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -263,9 +287,21 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
                   {filteredJobs.map((job) => (
                     <Card
                       key={job.id}
-                      className="cursor-pointer hover:shadow-md transition-all duration-200 border-border hover:border-primary/50"
-                      onClick={() => handleJobClick(job)}
+                      className={`cursor-pointer hover:shadow-md transition-all duration-200 border-border hover:border-primary/50 ${
+                        !isAddressVerified ? 'relative opacity-75' : ''
+                      }`}
+                      onClick={() => isAddressVerified ? handleJobClick(job) : null}
                     >
+                      {!isAddressVerified && (
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
+                          <div className="text-center">
+                            <Lock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm font-medium text-muted-foreground">
+                              Address verification required
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       <CardHeader className="pb-3">
                         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                           <div className="space-y-2">
@@ -474,6 +510,15 @@ export default function JobFinderDashboard({ userData }: JobFinderDashboardProps
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Already Applied
                     </div>
+                  ) : !isAddressVerified ? (
+                    <Button
+                      disabled
+                      className="flex-1"
+                      title="Address verification required to apply for jobs"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Apply Now (Locked)
+                    </Button>
                   ) : (
                     <Button
                       onClick={() => handleApply(selectedJob)}

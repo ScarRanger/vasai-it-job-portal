@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { authService } from '@/services/firebase';
+import { ocrService } from '@/services/ocrService';
 import { User } from '@/types';
-import { Upload, Eye, EyeOff, Mail, Phone, FileText } from 'lucide-react';
+import { Upload, Eye, EyeOff, Mail, Phone, FileText, CheckCircle, XCircle, Loader2, UserIcon } from 'lucide-react';
 
 interface InitialRegistrationFormProps {
   onRegistrationSuccess: (user: User) => void;
@@ -21,6 +22,7 @@ export default function InitialRegistrationForm({
 }: InitialRegistrationFormProps) {
   const [userType, setUserType] = useState<'job_finder' | 'company'>('job_finder');
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
     phone: '',
     password: '',
@@ -31,9 +33,23 @@ export default function InitialRegistrationForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [ocrVerifying, setOcrVerifying] = useState(false);
+  const [addressVerificationResult, setAddressVerificationResult] = useState<{
+    isValid: boolean;
+    message: string;
+    foundLocations?: string[];
+  } | null>(null);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
+
+    if (!formData.name) {
+      newErrors.name = 'Full name is required';
+    } else if (formData.name.length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      newErrors.name = 'Name should only contain letters and spaces';
+    }
 
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -57,21 +73,26 @@ export default function InitialRegistrationForm({
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if (!formData.addressProof) {
-      newErrors.addressProof = 'Address proof document is required';
+    // Address proof is only required for job seekers
+    if (userType === 'job_finder') {
+      if (!formData.addressProof) {
+        newErrors.addressProof = 'Address proof document is required for job seekers';
+      } else if (!addressVerificationResult?.isValid) {
+        newErrors.addressProof = 'Address verification failed. Please upload a valid address proof from Vasai region.';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file type (PDF, JPG, PNG)
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      // Check file type (JPG, PNG only for now)
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
-        setErrors({ ...errors, addressProof: 'Please upload a PDF, JPG, or PNG file' });
+        setErrors({ ...errors, addressProof: 'Please upload a JPG or PNG file' });
         return;
       }
       
@@ -83,6 +104,37 @@ export default function InitialRegistrationForm({
 
       setFormData({ ...formData, addressProof: file });
       setErrors({ ...errors, addressProof: '' });
+
+      // Perform OCR verification for job seekers
+      if (userType === 'job_finder') {
+        setOcrVerifying(true);
+        try {
+          const verificationResult = await ocrService.verifyAddressProof(file, formData.name);
+          
+          if (verificationResult.isValid) {
+            setAddressVerificationResult({
+              isValid: true,
+              message: `Verification successful! Address: ${verificationResult.foundLocations.join(', ')}${
+                verificationResult.nameMatched ? `, Name: ${verificationResult.extractedName}` : ''
+              }`,
+              foundLocations: verificationResult.foundLocations
+            });
+          } else {
+            setAddressVerificationResult({
+              isValid: false,
+              message: verificationResult.error || 'Verification failed'
+            });
+          }
+        } catch (err) {
+          console.error('OCR verification error:', err);
+          setAddressVerificationResult({
+            isValid: false,
+            message: 'OCR verification failed. Please try again.'
+          });
+        } finally {
+          setOcrVerifying(false);
+        }
+      }
     }
   };
 
@@ -94,30 +146,53 @@ export default function InitialRegistrationForm({
     setLoading(true);
     
     try {
-      // TODO: Upload address proof file to Firebase Storage
-      // For now, we'll just pass the file name
-      const addressProofUrl = formData.addressProof ? `uploads/${Date.now()}_${formData.addressProof.name}` : '';
+      // Only upload address proof for job seekers
+      const addressProofUrl = (userType === 'job_finder' && formData.addressProof) 
+        ? `uploads/${Date.now()}_${formData.addressProof.name}` 
+        : undefined;
       
       const userData: Partial<User> = {
+        name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        addressProof: addressProofUrl,
         userType,
         profileCompleted: false,
       };
+
+      // Add job finder specific fields only if user is a job finder
+      if (userType === 'job_finder') {
+        userData.addressProof = addressProofUrl;
+        userData.addressVerified = addressVerificationResult?.isValid || false;
+        
+        // Only add addressVerificationError if there is an error
+        if (!addressVerificationResult?.isValid && addressVerificationResult?.message) {
+          userData.addressVerificationError = addressVerificationResult.message;
+        }
+      }
 
       const firebaseUser = await authService.signUp(formData.email, formData.password, userData);
       
       // Create User object with proper types
       const user: User = {
         id: firebaseUser.uid,
+        name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        addressProof: addressProofUrl,
         userType,
         profileCompleted: false,
         createdAt: new Date(),
       };
+
+      // Add job finder specific fields to the user object
+      if (userType === 'job_finder') {
+        user.addressProof = addressProofUrl;
+        user.addressVerified = addressVerificationResult?.isValid || false;
+        
+        // Only add addressVerificationError if there is an error
+        if (!addressVerificationResult?.isValid && addressVerificationResult?.message) {
+          user.addressVerificationError = addressVerificationResult.message;
+        }
+      }
       
       onRegistrationSuccess(user);
     } catch (error) {
@@ -171,6 +246,24 @@ export default function InitialRegistrationForm({
 
             <TabsContent value={userType}>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-white">
+                    <UserIcon className="w-4 h-4 inline mr-2" />
+                    Full Name
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="bg-input border-border text-foreground"
+                    required
+                  />
+                  {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
+                </div>
+
                 {/* Email */}
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-white">
@@ -259,35 +352,61 @@ export default function InitialRegistrationForm({
                   {errors.confirmPassword && <p className="text-red-400 text-sm">{errors.confirmPassword}</p>}
                 </div>
 
-                {/* Address Proof Upload */}
-                <div className="space-y-2">
-                  <Label htmlFor="addressProof" className="text-white">
-                    <FileText className="w-4 h-4 inline mr-2" />
-                    Address Proof Document
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id="addressProof"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={handleFileUpload}
-                      className="bg-input border-border text-foreground file:bg-muted file:text-foreground file:border-0"
-                      required
-                    />
-                    <div className="absolute right-2 top-2">
-                                            <Upload className="h-4 w-4 text-muted-foreground" />
+                {/* Address Proof Upload - Only for Job Seekers */}
+                {userType === 'job_finder' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="addressProof" className="text-white">
+                      <FileText className="w-4 h-4 inline mr-2" />
+                      Address Proof Document
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="addressProof"
+                        type="file"
+                        accept=".jpg,.jpeg,.png"
+                        onChange={handleFileUpload}
+                        className="bg-input border-border text-foreground file:bg-muted file:text-foreground file:border-0"
+                        required
+                      />
+                      <div className="absolute right-2 top-2">
+                        {ocrVerifying ? (
+                          <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Upload Aadhar, Passport, or Utility Bill (PDF, JPG, PNG - Max 5MB)
-                  </p>
-                  {formData.addressProof && (
-                    <p className="text-green-400 text-sm">
-                      ✓ {formData.addressProof.name} selected
+                    <p className="text-xs text-muted-foreground">
+                      Upload Aadhar, Passport, or Utility Bill from Vasai region (JPG, PNG - Max 5MB)
+                      <br />
+                      <strong>Note:</strong> Document will be verified for both address and name match
                     </p>
-                  )}
-                  {errors.addressProof && <p className="text-red-400 text-sm">{errors.addressProof}</p>}
-                </div>
+                    {formData.addressProof && (
+                      <p className="text-green-400 text-sm">
+                        ✓ {formData.addressProof.name} selected
+                      </p>
+                    )}
+                    {ocrVerifying && (
+                      <p className="text-blue-400 text-sm flex items-center">
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Verifying address and name match...
+                      </p>
+                    )}
+                    {addressVerificationResult && (
+                      <div className={`text-sm flex items-center ${
+                        addressVerificationResult.isValid ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {addressVerificationResult.isValid ? (
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mr-2" />
+                        )}
+                        {addressVerificationResult.message}
+                      </div>
+                    )}
+                    {errors.addressProof && <p className="text-red-400 text-sm">{errors.addressProof}</p>}
+                  </div>
+                )}
 
                 {errors.submit && (
                   <div className="text-red-400 text-sm text-center p-2 bg-red-900/20 rounded">
