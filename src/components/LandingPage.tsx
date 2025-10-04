@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { authService } from '@/services/firebase';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Users, Search, MapPin, CheckCircle, ArrowRight, Star } from 'lucide-react';
+import { SimpleThemeToggle } from '@/components/theme-toggle';
 
 type UserType = 'job_finder' | 'company';
 
@@ -182,6 +183,7 @@ export default function LandingPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
+              <SimpleThemeToggle />
               <Button 
                 variant="ghost" 
                 size="sm"

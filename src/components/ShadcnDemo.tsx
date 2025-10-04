@@ -17,7 +17,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
-import { Mail, Phone, User, Settings, LogOut, Menu, Star, Heart, Share2 } from 'lucide-react';
+import { Mail, Phone, User, Settings, LogOut, Menu, Star, Heart, Share2, Moon } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 interface FormData {
   name: string;
@@ -48,20 +49,25 @@ export default function ShadcnDemo() {
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <div className="container-responsive">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">shadcn/ui Components Demo</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            A comprehensive showcase of all the shadcn/ui components integrated into the Vasai IT Job Portal
+      {/* Header with theme toggle */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-4xl font-bold text-foreground mb-2">shadcn/ui Components Demo</h1>
+          <p className="text-lg text-muted-foreground">
+            A comprehensive showcase with light and dark mode support
           </p>
         </div>
+        <ThemeToggle />
+      </div>
 
+      <div className="container-responsive">
         <Tabs defaultValue="components" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="components">Components</TabsTrigger>
             <TabsTrigger value="forms">Forms</TabsTrigger>
             <TabsTrigger value="navigation">Navigation</TabsTrigger>
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
+            <TabsTrigger value="themes">Dark Mode</TabsTrigger>
           </TabsList>
 
           <TabsContent value="components" className="space-y-6">
@@ -431,14 +437,124 @@ export default function ShadcnDemo() {
               </Card>
             </div>
           </TabsContent>
+
+          <TabsContent value="themes" className="space-y-6">
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-foreground">Dark Mode Showcase</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Experience seamless dark mode transitions across all components. Use the theme toggle in the header to switch between light, dark, and system themes.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Theme Examples */}
+              <Card className="border-2 border-primary/20">
+                <CardHeader>
+                  <CardTitle>Theme Colors</CardTitle>
+                  <CardDescription>CSS variables adapt automatically</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="h-8 bg-background border rounded flex items-center justify-center text-xs">
+                      Background
+                    </div>
+                    <div className="h-8 bg-foreground rounded flex items-center justify-center text-xs text-background">
+                      Foreground
+                    </div>
+                    <div className="h-8 bg-primary rounded flex items-center justify-center text-xs text-primary-foreground">
+                      Primary
+                    </div>
+                    <div className="h-8 bg-secondary rounded flex items-center justify-center text-xs text-secondary-foreground">
+                      Secondary
+                    </div>
+                    <div className="h-8 bg-muted rounded flex items-center justify-center text-xs text-muted-foreground">
+                      Muted
+                    </div>
+                    <div className="h-8 bg-accent rounded flex items-center justify-center text-xs text-accent-foreground">
+                      Accent
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Component Variants</CardTitle>
+                  <CardDescription>All variants work in both themes</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm">Primary</Button>
+                    <Button variant="secondary" size="sm">Secondary</Button>
+                    <Button variant="outline" size="sm">Outline</Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge>Default</Badge>
+                    <Badge variant="secondary">Secondary</Badge>
+                    <Badge variant="outline">Outline</Badge>
+                  </div>
+                  <Input placeholder="Dark mode compatible input" />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Interactive Elements</CardTitle>
+                  <CardDescription>Hover and focus states adapt</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => toast.success('Dark mode toast!')}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Trigger Toast
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start">
+                        <Menu className="h-4 w-4 mr-2" />
+                        Dark Mode Menu
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem>Light Theme</DropdownMenuItem>
+                      <DropdownMenuItem>Dark Theme</DropdownMenuItem>
+                      <DropdownMenuItem>System Theme</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-gradient-to-r from-primary/10 to-secondary/10">
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
+                    <Moon className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">🌙 Dark Mode Ready!</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    All shadcn/ui components seamlessly adapt to your preferred theme with smooth transitions and perfect contrast ratios.
+                  </p>
+                  <div className="flex justify-center gap-2">
+                    <Badge variant="success">Accessible</Badge>
+                    <Badge variant="info">Responsive</Badge>
+                    <Badge variant="secondary">Smooth Transitions</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         <div className="mt-12 text-center">
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-2">🎉 shadcn/ui Successfully Integrated!</h3>
+              <h3 className="text-lg font-semibold mb-2">🎉 shadcn/ui with Dark Mode Successfully Integrated!</h3>
               <p className="text-muted-foreground">
-                All components are properly configured with your existing theme and ready to use throughout the application.
+                All components are properly configured with your existing theme and support both light and dark modes with seamless transitions.
               </p>
             </CardContent>
           </Card>

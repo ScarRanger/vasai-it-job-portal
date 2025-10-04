@@ -10,6 +10,7 @@ import CompanyDashboard from '@/components/CompanyDashboard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Briefcase, LogOut, User as UserIcon } from 'lucide-react';
+import { SimpleThemeToggle } from '@/components/theme-toggle';
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -100,6 +101,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <SimpleThemeToggle />
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-foreground">{userData.name}</p>
                 <p className="text-xs text-muted-foreground">
